@@ -4,8 +4,8 @@ use rocket::http::Status;
 use rocket::Request;
 use telnet::{Telnet,Event};
 
-const TELNET_HOST: &str = "127.0.0.1";
-const TELNET_PORT: u16 = 30100;
+const TELNET_HOST: &str = "192.168.1.11";
+const TELNET_PORT: u16 = 3039;
 
 #[catch(404)]
 fn not_found(req: &Request) -> String {
