@@ -21,6 +21,18 @@ fn run(task: String) -> rocket::http::Status {
     };
 
     connection.write("authenticate 1\n".as_bytes()).unwrap();
+    loop {
+        let result = connection.read_nonblocking();
+        let event = match result {
+            Ok(res) => res,
+            Err(_) => return Status::InternalServerError,
+        };
+        
+        if let Event::Data(buffer) = event {
+            println!("{:?}", buffer);
+            break;
+        }
+    }
     connection.write(format!("run {}\n", task).as_bytes()).unwrap();
     Status::NoContent
 }
