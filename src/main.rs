@@ -7,7 +7,6 @@ use telnet::{Event, Telnet};
 const TELNET_HOST: &str = "192.168.1.11";
 const TELNET_PORT: u16 = 3039;
 
-
 fn authenticate(connection: &mut telnet::Telnet) -> Result<(), ()> {
     if let Err(_) = send(connection, "authenticate 1\n") {
         return Err(());
@@ -35,7 +34,6 @@ fn send(connection: &mut telnet::Telnet, command: &str) -> Result<(), ()> {
     };
     Ok(())
 }
-
 
 #[catch(404)]
 fn not_found(req: &Request) -> String {
@@ -81,11 +79,9 @@ fn halt() -> rocket::http::Status {
     Status::NoContent
 }
 
-#[rocket::main]
-async fn main() {
+#[launch]
+fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![not_found])
         .mount("/", routes![run, halt])
-        .launch()
-        .await;
 }
