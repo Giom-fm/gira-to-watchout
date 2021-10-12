@@ -2,7 +2,7 @@
 extern crate rocket;
 use rocket::http::Status;
 use rocket::Request;
-use telnet::Telnet;
+use telnet::{Telnet,Event};
 
 const TELNET_HOST: &str = "127.0.0.1";
 const TELNET_PORT: u16 = 30100;
@@ -20,8 +20,15 @@ fn run(task: String) -> rocket::http::Status {
         Err(_) => return Status::InternalServerError,
     };
 
-    let command = format!("authenticate 1\nrun {}", task);
-    connection.write(command.as_bytes()).unwrap();
+    
+    connection.write("authenticate 1".as_bytes()).unwrap();
+    let event = connection.read().expect("Read error");
+    if let Event::Data(buffer) = event {
+        // Debug: print the data buffer
+        println!("{:?}", buffer);
+        // process the data buffer
+    }
+    connection.write(format!("run {}", task).as_bytes()).unwrap();
     Status::NoContent
 }
 
@@ -32,4 +39,7 @@ async fn main() {
         .mount("/", routes![run])
         .launch()
         .await;
+
+
+     
 }
