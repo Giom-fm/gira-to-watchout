@@ -20,15 +20,21 @@ fn run(task: String) -> rocket::http::Status {
         Err(_) => return Status::InternalServerError,
     };
 
-    
-    connection.write("authenticate 1".as_bytes()).unwrap();
-    let event = connection.read().expect("Read error");
-    if let Event::Data(buffer) = event {
-        // Debug: print the data buffer
-        println!("{:?}", buffer);
-        // process the data buffer
-    }
-    connection.write(format!("run {}", task).as_bytes()).unwrap();
+    connection.write("authenticate 1\n".as_bytes()).unwrap();
+    connection.write(format!("run {}\n", task).as_bytes()).unwrap();
+    Status::NoContent
+}
+
+#[get("/halt")]
+fn halt() -> rocket::http::Status {
+    let result = Telnet::connect((TELNET_HOST, TELNET_PORT), 256);
+    let mut connection = match result {
+        Ok(res) => res,
+        Err(_) => return Status::InternalServerError,
+    };
+
+    connection.write("authenticate 1\n".as_bytes()).unwrap();
+    connection.write("halt\n".as_bytes()).unwrap();
     Status::NoContent
 }
 
@@ -36,7 +42,7 @@ fn run(task: String) -> rocket::http::Status {
 async fn main() {
     rocket::build()
         .register("/", catchers![not_found])
-        .mount("/", routes![run])
+        .mount("/", routes![run, halt])
         .launch()
         .await;
 
