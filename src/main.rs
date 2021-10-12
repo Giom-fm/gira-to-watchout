@@ -60,28 +60,9 @@ fn run(task: String) -> rocket::http::Status {
     Status::NoContent
 }
 
-#[get("/kill")]
-fn halt() -> rocket::http::Status {
-    let result = Telnet::connect((TELNET_HOST, TELNET_PORT), 256);
-    let mut connection = match result {
-        Ok(res) => res,
-        Err(_) => return Status::InternalServerError,
-    };
-
-    if let Err(()) = authenticate(&mut connection) {
-        return Status::InternalServerError;
-    }
-
-    if let Err(_) = send(&mut connection, "kill\n") {
-        return Status::InternalServerError;
-    };
-
-    Status::NoContent
-}
-
 #[launch]
 fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![not_found])
-        .mount("/", routes![run, halt])
+        .mount("/", routes![run])
 }
