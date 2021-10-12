@@ -2,8 +2,10 @@
 extern crate rocket;
 use rocket::http::Status;
 use rocket::Request;
-use std::sync::{Arc, Mutex};
-use telnet::{Event, Telnet};
+use telnet::Telnet;
+
+const TELNET_HOST: &str = "127.0.0.1";
+const TELNET_PORT: u16 = 30100;
 
 #[catch(404)]
 fn not_found(req: &Request) -> String {
@@ -12,7 +14,7 @@ fn not_found(req: &Request) -> String {
 
 #[get("/run/<task>")]
 fn run(task: String) -> rocket::http::Status {
-    let result = Telnet::connect(("127.0.0.1", 30100), 256);
+    let result = Telnet::connect((TELNET_HOST, TELNET_PORT), 256);
     let mut connection = match result {
         Ok(res) => res,
         Err(_) => return Status::InternalServerError,
@@ -30,13 +32,4 @@ async fn main() {
         .mount("/", routes![run])
         .launch()
         .await;
-
-    /*loop {
-        let event = connection.read_nonblocking().expect("Read error");
-        if let Event::Data(buffer) = event {
-            // Debug: print the data buffer
-            println!("{:?}", buffer);
-            // process the data buffer
-        }
-    }*/
 }
