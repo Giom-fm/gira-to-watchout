@@ -67,7 +67,9 @@ fn monitor(ip: &str, state: &str) -> rocket::http::Status {
 
     let mut stream = match TcpStream::connect(ip) {
         Ok(stream) => stream,
-        Err(_) => return Status::BadRequest,
+        Err(_) => {
+            println!("Can not connect to ip");
+            return Status::BadRequest},
     };
 
     let start: u8 = 0xAA;
@@ -84,6 +86,7 @@ fn monitor(ip: &str, state: &str) -> rocket::http::Status {
         data = 0x00;
         checksum = 0x13;
     } else {
+        println!("Wrong State");
         return Status::BadRequest;
     }
 
