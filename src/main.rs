@@ -2,6 +2,8 @@
 extern crate rocket;
 use rocket::http::Status;
 use rocket::Request;
+use std::io::prelude::*;
+use std::net::TcpStream;
 use telnet::{Event, Telnet};
 
 const TELNET_HOST: &str = "192.168.1.11";
@@ -60,9 +62,38 @@ fn run(task: String) -> rocket::http::Status {
     Status::NoContent
 }
 
+#[get("/monitor/<state>")]
+fn monitor(state: String) -> rocket::http::Status {
+    let mut stream = TcpStream::connect("192.168.1.55:1515").unwrap();
+
+    let start: u8 = 0xAA;
+    let cmd: u8 = 0x11;
+    let id: u8 = 0x00;
+    let data_length: u8 = 0x01;
+    let data: u8;
+    let checksum: u8;
+
+    if state == "on" {
+        data = 0x01;
+        checksum = 0x13;
+    } else if state == "off" {
+        data = 0x00;
+        checksum = 0x12;
+    } else {
+        return Status::NotFound;
+    }
+
+    let buffer = [start, cmd, id, data_length, data, checksum];
+    println!("{:?}", buffer);
+
+    stream.write(&buffer).unwrap();
+    //stream.write("TEST".as_bytes()).unwrap();
+    Status::NoContent
+}
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![not_found])
-        .mount("/", routes![run])
+        .mount("/", routes![run, monitor])
 }
