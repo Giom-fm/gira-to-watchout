@@ -62,6 +62,27 @@ fn run(task: String) -> rocket::http::Status {
     Status::NoContent
 }
 
+
+#[get("/kill/<task>")]
+fn kill(task: String) -> rocket::http::Status {
+    let result = Telnet::connect((TELNET_HOST, TELNET_PORT), 256);
+
+    let mut connection = match result {
+        Ok(res) => res,
+        Err(_) => return Status::InternalServerError,
+    };
+
+    if let Err(_) = authenticate(&mut connection) {
+        return Status::InternalServerError;
+    }
+
+    if let Err(_) = send(&mut connection, &format!("kill {}\n", task)) {
+        return Status::InternalServerError;
+    };
+
+    Status::NoContent
+}
+
 #[get("/monitor?<ip>&<state>")]
 fn monitor(ip: &str, state: &str) -> rocket::http::Status {
 
@@ -108,5 +129,5 @@ fn monitor(ip: &str, state: &str) -> rocket::http::Status {
 fn rocket() -> _ {
     rocket::build()
         .register("/", catchers![not_found])
-        .mount("/", routes![run, monitor])
+        .mount("/", routes![run, monitor, kill])
 }
