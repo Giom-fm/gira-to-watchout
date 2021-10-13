@@ -62,32 +62,42 @@ fn run(task: String) -> rocket::http::Status {
     Status::NoContent
 }
 
-#[get("/monitor/<state>")]
-fn monitor(state: String) -> rocket::http::Status {
-    let mut stream = TcpStream::connect("192.168.1.55:1515").unwrap();
+#[get("/monitor?<ip>&<state>")]
+fn monitor(ip: &str, state: &str) -> rocket::http::Status {
+
+    let mut stream = match TcpStream::connect(ip) {
+        Ok(stream) => stream,
+        Err(_) => return Status::BadRequest,
+    };
 
     let start: u8 = 0xAA;
     let cmd: u8 = 0x11;
-    let id: u8 = 0x00;
+    let id: u8 = 0x01;
     let data_length: u8 = 0x01;
     let data: u8;
     let checksum: u8;
 
     if state == "on" {
         data = 0x01;
-        checksum = 0x13;
+        checksum = 0x14;
     } else if state == "off" {
         data = 0x00;
-        checksum = 0x12;
+        checksum = 0x13;
     } else {
-        return Status::NotFound;
+        return Status::BadRequest;
     }
 
     let buffer = [start, cmd, id, data_length, data, checksum];
-    println!("{:?}", buffer);
+ 
+    if let Err(_) = stream.write(&buffer){
+        return Status::InternalServerError;
+    }
+    let mut buffer = [0; 128];
+    match stream.read(&mut buffer) {
+        Ok(_) => println!("{:?}", buffer),
+        Err(_) =>  return Status::InternalServerError
+    }
 
-    stream.write(&buffer).unwrap();
-    //stream.write("TEST".as_bytes()).unwrap();
     Status::NoContent
 }
 
